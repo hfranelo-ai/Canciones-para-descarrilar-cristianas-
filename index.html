@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMOCIONES | Music</title>
+<style>
+:root {
+  --bg:#080808;
+  --panel:#121212;
+  --panel2:#202020;
+  --green:#1ed760;
+  --muted:#aaa;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:white;
+  font-family:Arial,sans-serif;
+}
+button{cursor:pointer;font:inherit}
+.app{display:flex;min-height:100vh;padding:10px;gap:10px;padding-bottom:110px}
+.sidebar{
+  width:235px;flex-shrink:0;background:#111;
+  border-radius:12px;padding:24px 17px;
+}
+.logo{font-size:25px;font-weight:900;letter-spacing:2px}
+.logo span{color:var(--green)}
+.nav{margin-top:35px}
+.nav button{
+  display:block;width:100%;padding:13px;
+  color:#aaa;background:none;border:0;text-align:left;
+  font-weight:bold;border-radius:7px;
+}
+.nav button:hover,.nav button.active{color:white;background:#252525}
+main{flex:1;min-width:0;background:var(--panel);border-radius:12px;padding:25px}
+.hero{
+  min-height:240px;border-radius:12px;padding:30px;
+  display:flex;align-items:end;
+  background:linear-gradient(90deg,#101010,#353535,#161616);
+  position:relative;overflow:hidden;
+}
+.hero:after{
+  content:"♫";position:absolute;right:50px;top:-35px;
+  font-size:240px;color:#ffffff0b;
+}
+.hero small{color:#ddd}
+.hero h1{font-size:clamp(40px,7vw,75px);margin:12px 0}
+.hero p{color:#ccc;margin:0}
+.section-title{margin:30px 0 15px;font-size:22px}
+.search{
+  width:100%;max-width:400px;background:#252525;
+  border:1px solid #444;color:white;border-radius:30px;
+  padding:13px 18px;outline:none;
+}
+.songs{display:flex;flex-direction:column;gap:4px}
+.song{
+  display:flex;align-items:center;gap:15px;
+  padding:10px;border-radius:7px;cursor:pointer;
+}
+.song:hover,.song.playing{background:#292929}
+.cover{
+  width:53px;height:53px;border-radius:5px;
+  display:grid;place-items:center;font-size:22px;
+  background:linear-gradient(135deg,#713e63,#222);
+  flex-shrink:0;
+}
+.song-info{flex:1;min-width:0}
+.song-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-info small{display:block;color:var(--muted);margin-top:5px}
+.song button{border:0;background:none;color:#aaa;font-size:19px;padding:8px}
+.song button:hover{color:var(--green)}
+.player{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#181818;border-top:1px solid #333;
+  padding:14px 22px;display:grid;
+  grid-template-columns:1fr 1.5fr 1fr;align-items:center;gap:20px;
+  z-index:10;
+}
+.current{display:flex;align-items:center;gap:12px;min-width:0}
+.current .cover{width:48px;height:48px}
+.current b{display:block;font-size:13px}
+.current small{color:#aaa;font-size:11px}
+.controls{text-align:center}
+.buttons{display:flex;justify-content:center;align-items:center;gap:20px}
+.buttons button{background:none;border:0;color:#ddd;font-size:20px}
+.buttons button:hover{color:var(--green)}
+#play{
+  background:white;color:black;border-radius:50%;
+  width:38px;height:38px;font-size:17px;
+}
+.progress-row{display:flex;align-items:center;gap:10px;margin-top:9px}
+.progress-row small{color:#aaa;font-size:10px}
+input[type=range]{accent-color:var(--green);cursor:pointer;min-width:0}
+#progress{flex:1}
+.volume{text-align:right}
+.volume input{width:90px;max-width:70%}
+.empty{color:#aaa;padding:25px}
+@media(max-width:650px){
+  .app{padding:6px;padding-bottom:150px}
+  .sidebar{display:none}
+  main{padding:15px}
+  .hero{min-height:190px;padding:20px}
+  .player{
+    grid-template-columns:1fr 1fr;
+    gap:8px;padding:12px;
+  }
+  .current{grid-column:1/3}
+  .controls{grid-column:1/2}
+  .volume{grid-column:2/3}
+  .volume input{width:65px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">EMO<span>CIONES.</span></div>
+  <div class="nav">
+    <button class="active" onclick="showAll()">⌂ Inicio</button>
+    <button onclick="showFavorites()">♡ Favoritos</button>
+    <button onclick="shuffle()">⤨ Aleatorio</button>
+  </div>
+</aside>
+
+<main>
+  <div class="hero">
+    <div>
+      <small>BIENVENIDO A TU MÚSICA</small>
+      <h1>EMOCIONES.</h1>
+      <p>Un sonido para cada momento.</p>
+    </div>
+  </div>
+
+  <h2 class="section-title">Tu música</h2>
+  <input class="search" id="search"
+    placeholder="⌕ Buscar canciones o artistas..."
+    oninput="render()">
+
+  <h2 class="section-title" id="listTitle">Playlist</h2>
+  <div class="songs" id="songs"></div>
+</main>
+</div>
+
+<div class="player">
+  <div class="current">
+    <div class="cover">♫</div>
+    <div style="min-width:0">
+      <b id="nowTitle">EMOCIONES</b>
+      <small id="nowArtist">Selecciona una canción</small>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="buttons">
+      <button onclick="previous()">⏮</button>
+      <button id="play" onclick="togglePlay()">▶</button>
+      <button onclick="next()">⏭</button>
+    </div>
+    <div class="progress-row">
+      <small id="elapsed">0:00</small>
+      <input id="progress" type="range" min="0" max="100" value="0">
+      <small id="total">0:00</small>
+    </div>
+  </div>
+
+  <div class="volume">
+    <span>🔊</span>
+    <input id="volume" type="range" min="0" max="1" step=".01" value=".8">
+  </div>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+const songs=[
+ {title:"Emociones",artist:"Hades66",url:"",id:1},
+ {title:"VVs Swich",artist:"Fuerza Regida",url:"",id:2},
+ {title:"Canción favorita",artist:"Víctor Mendivil",url:"",id:3},
+ {title:"Canción favorita",artist:"Bad Bunny",url:"",id:4}
+];
+
+let current=0;
+let favorites=[];
+let mode="all";
+const audio=document.getElementById("audio");
+
+function render(){
+ const query=document.getElementById("search").value.toLowerCase();
+ const list=songs.map((s,i)=>({...s,index:i})).filter(s=>{
+  const match=(s.title+" "+s.artist).toLowerCase().includes(query);
+  return match&&(mode==="all"||favorites.includes(s.index));
+ });
+
+ document.getElementById("songs").innerHTML=list.length?list.map(s=>`
+  <div class="song ${s.index===current?'playing':''}">
+   <div class="cover" onclick="selectSong(${s.index})">♫</div>
+   <div class="song-info" onclick="selectSong(${s.index})">
+    <b>${s.title}</b><small>${s.artist}</small>
+   </div>
+   <button onclick="favorite(${s.index})">${favorites.includes(s.index)?"♥":"♡"}</button>
+   <button onclick="selectSong(${s.index})">▶</button>
+  </div>`).join(""):'<div class="empty">No se encontraron canciones.</div>';
+}
+
+function selectSong(i){
+ current=i;
+ document.getElementById("nowTitle").textContent=songs[i].title;
+ document.getElementById("nowArtist").textContent=songs[i].artist;
+ if(!songs[i].url){
+  audio.pause();
+  audio.removeAttribute("src");
+  document.getElementById("play").textContent="▶";
+  render();
+  alert("Agrega el enlace de audio de esta canción para reproducirla.");
+  return;
+ }
+ audio.src=songs[i].url;
+ audio.play().catch(()=>alert("No se pudo reproducir el audio."));
+ render();
+}
+
+function togglePlay(){
+ if(!audio.src){selectSong(current);return}
+ if(audio.paused)audio.play();
+ else audio.pause();
+}
+
+function next(){selectSong((current+1)%songs.length)}
+function previous(){selectSong((current-1+songs.length)%songs.length)}
+function shuffle(){
+ const i=Math.floor(Math.random()*songs.length);
+ selectSong(i);
+}
+function favorite(i){
+ favorites=favorites.includes(i)?favorites.filter(x=>x!==i):[...favorites,i];
+ render();
+}
+function showAll(){
+ mode="all";
+ document.getElementById("listTitle").textContent="Playlist";
+ render();
+}
+function showFavorites(){
+ mode="favorites";
+ document.getElementById("listTitle").textContent="Tus favoritos";
+ render();
+}
+function time(s){
+ if(!Number.isFinite(s))return "0:00";
+ return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+}
+
+audio.addEventListener("play",()=>document.getElementById("play").textContent="Ⅱ");
+audio.addEventListener("pause",()=>document.getElementById("play").textContent="▶");
+audio.addEventListener("ended",next);
+audio.addEventListener("timeupdate",()=>{
+ document.getElementById("progress").value=audio.duration?audio.currentTime/audio.duration*100:0;
+ document.getElementById("elapsed").textContent=time(audio.currentTime);
+ document.getElementById("total").textContent=time(audio.duration);
+});
+document.getElementById("progress").oninput=e=>{
+ if(audio.duration)audio.currentTime=e.target.value/100*audio.duration;
+};
+document.getElementById("volume").oninput=e=>audio.volume=e.target.value;
+
+audio.volume=.8;
+render();
+</script>
+</body>
+</html>
